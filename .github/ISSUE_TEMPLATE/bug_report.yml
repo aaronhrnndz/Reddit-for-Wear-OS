@@ -1,0 +1,97 @@
+name: Bug report
+description: Report an issue or bug with Red for Reddit
+title: "[BUG]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please fill out this form completely so we can diagnose and fix the issue faster.
+
+  - type: input
+    id: watch_model
+    attributes:
+      label: Smartwatch Model & Manufacturer
+      description: Exact device model (e.g. Galaxy Watch 6 SM-R930, Pixel Watch 2, Xiaomi Watch 2 Pro, TicWatch Pro 5).
+      placeholder: "e.g. Galaxy Watch 6 44mm (SM-R930)"
+    validations:
+      required: true
+
+  - type: input
+    id: phone_model
+    attributes:
+      label: Phone Model (if using Companion App)
+      description: Phone manufacturer and model if the issue relates to the Companion app or Bluetooth sync.
+      placeholder: "e.g. Samsung Galaxy S23 / Pixel 8 / OnePlus 11"
+    validations:
+      required: false
+
+  - type: input
+    id: app_version
+    attributes:
+      label: App Version
+      description: Version of Red for Reddit (Found in Watch settings or Companion app, e.g. 1.6.8 or 1.6.8-beta.2).
+      placeholder: "e.g. 1.6.8"
+    validations:
+      required: true
+
+  - type: input
+    id: os_version
+    attributes:
+      label: Wear OS & Android Version
+      description: Watch Settings -> System/About -> Versions (e.g. Wear OS 4.0 / One UI Watch 5.0, Android 14).
+      placeholder: "e.g. Wear OS 4.0 / One UI 5.0 Watch"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: app_component
+    attributes:
+      label: Affected Component
+      description: Where is the bug occurring?
+      options:
+        - "Watch App (Standalone)"
+        - "Companion Phone App"
+        - "Watch & Phone Sync / Login"
+        - "Tiles / Complications"
+        - "Media / Image / Video Loading"
+        - "Comments & Voting"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the Bug
+      description: Clear and concise description of what the issue is.
+      placeholder: "What went wrong?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction_steps
+    attributes:
+      label: Steps to Reproduce
+      description: Step-by-step instructions on how to trigger the issue.
+      placeholder: |
+        1. Open '...'
+        2. Tap on '...'
+        3. See error...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs_or_screenshots
+    attributes:
+      label: Logcat / Screenshots
+      description: Attach screenshots, screen recordings, or relevant logcat snippets if available.
+    validations:
+      required: false

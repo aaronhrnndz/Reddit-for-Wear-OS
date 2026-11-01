@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Community Questions & Discussions
+    url: https://github.com/Aaronhrndz/Reddit-for-Wear-OS/discussions
+    about: Please ask setup questions, configuration tips, and general ideas in Discussions instead of opening an issue.
