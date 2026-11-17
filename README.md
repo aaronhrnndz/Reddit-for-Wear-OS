@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> **Migrating from v1.6.8 or older?** The previous GitHub repository is offline, so older versions cannot receive OTA updates automatically. Please download and install **v1.6.9** manually once (from [GitHub Releases](https://github.com/aaronhrnndz/Reddit-for-Wear-OS/releases/latest) or [Codeberg Mirror](https://codeberg.org/Aaronhrndz/Reddit-for-Wear-OS/releases))—from this version onward, automatic OTA updates work seamlessly across **Codeberg** and **GitHub**.
+
 <p align="center">
   <img src="docs/icon.png" width="110" height="110" alt="Red for Reddit Icon" />
 </p>
