@@ -10,8 +10,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Aaronhrndz/Reddit-for-Wear-OS/releases/latest">
-    <img src="https://img.shields.io/github/v/release/Aaronhrndz/Reddit-for-Wear-OS?color=FF4500&label=latest%20release&style=flat-square" alt="Latest Release" />
+  <a href="https://github.com/aaronhrnndz/Reddit-for-Wear-OS/releases/latest">
+    <img src="https://img.shields.io/github/v/release/aaronhrnndz/Reddit-for-Wear-OS?color=FF4500&label=latest%20release&style=flat-square" alt="Latest Release" />
   </a>
   <a href="https://ko-fi.com/aaronhrndz">
     <img src="https://img.shields.io/badge/Ko--fi-Donate%20%E2%98%95-FF5E5B?style=flat-square&logo=kofi&logoColor=white" alt="Support on Ko-fi" />

@@ -19,8 +19,9 @@ data class CompanionReleaseInfo(
 )
 
 object CompanionUpdateChecker {
-    private const val REPO_API_LATEST = "https://api.github.com/repos/Aaronhrndz/Reddit-for-Wear-OS/releases/latest"
-    private const val REPO_API_ALL = "https://api.github.com/repos/Aaronhrndz/Reddit-for-Wear-OS/releases?per_page=1"
+    private const val CODEBERG_MANIFEST_URL = "https://codeberg.org/Aaronhrndz/Reddit-for-Wear-OS/raw/branch/main/update.json"
+    private const val CODEBERG_RELEASES_API = "https://codeberg.org/api/v1/repos/Aaronhrndz/Reddit-for-Wear-OS/releases?limit=5"
+    private val GITHUB_REPOS = listOf("Aaronhrndz/Reddit-for-Wear-OS", "aaronhrnndz/Reddit-for-Wear-OS")
     private const val PREFS_NAME = "companion_ota_prefs"
     private const val KEY_BETA_CHANNEL = "beta_channel_enabled"
     private val json = Json { ignoreUnknownKeys = true }
@@ -38,58 +39,129 @@ object CompanionUpdateChecker {
     }
 
     suspend fun checkLatestRelease(currentVersionName: String, isBeta: Boolean = false): CompanionReleaseInfo? = withContext(Dispatchers.IO) {
-        try {
-            val apiUrl = if (isBeta) REPO_API_ALL else REPO_API_LATEST
-            val conn = (URL(apiUrl).openConnection() as HttpURLConnection).apply {
+        val cleanCurrent = currentVersionName.removePrefix("v").trim()
+        var best: CompanionReleaseInfo? = null
+
+        fun pickHigher(candidate: CompanionReleaseInfo?) {
+            if (candidate == null) return
+            val cur = best
+            if (cur == null || isNewerVersion(candidate.latestVersion, cur.latestVersion)) {
+                best = candidate
+            }
+        }
+
+        // 1. Codeberg Master Manifest (update.json)
+        fetchText(CODEBERG_MANIFEST_URL)?.let { body ->
+            try {
+                val root = json.parseToJsonElement(body).jsonObject
+                val ver = root["version"]?.jsonPrimitive?.content?.removePrefix("v")?.trim()
+                val isPre = root["isPrerelease"]?.jsonPrimitive?.content?.toBooleanStrictOrNull() ?: false
+                if (!ver.isNullOrEmpty() && (isBeta || !isPre)) {
+                    pickHigher(
+                        CompanionReleaseInfo(
+                            latestTag = "v$ver",
+                            latestVersion = ver,
+                            isUpdateAvailable = isNewerVersion(ver, cleanCurrent),
+                            releaseHtmlUrl = root["htmlUrl"]?.jsonPrimitive?.content
+                                ?: "https://codeberg.org/Aaronhrndz/Reddit-for-Wear-OS/releases/latest",
+                            wearApkUrl = root["wearApkUrl"]?.jsonPrimitive?.content,
+                            mobileApkUrl = root["mobileApkUrl"]?.jsonPrimitive?.content
+                        )
+                    )
+                }
+            } catch (_: Exception) {}
+        }
+
+        // 2 & 3. GitHub Primary (Aaronhrndz) & Secondary (aaronhrnndz)
+        for (repo in GITHUB_REPOS) {
+            val apiUrl = if (isBeta) {
+                "https://api.github.com/repos/$repo/releases?per_page=5"
+            } else {
+                "https://api.github.com/repos/$repo/releases/latest"
+            }
+            fetchText(apiUrl, "application/vnd.github+json")?.let { body ->
+                try {
+                    if (isBeta) {
+                        val arr = json.parseToJsonElement(body).jsonArray
+                        for (elem in arr) {
+                            val obj = elem.jsonObject
+                            if (obj["draft"]?.jsonPrimitive?.content?.toBooleanStrictOrNull() == true) continue
+                            pickHigher(parseReleaseObj(obj, cleanCurrent, repo))
+                        }
+                    } else {
+                        pickHigher(parseReleaseObj(json.parseToJsonElement(body).jsonObject, cleanCurrent, repo))
+                    }
+                } catch (_: Exception) {}
+            }
+        }
+
+        // 4. Codeberg Releases API
+        fetchText(CODEBERG_RELEASES_API, "application/json")?.let { body ->
+            try {
+                val arr = json.parseToJsonElement(body).jsonArray
+                for (elem in arr) {
+                    val obj = elem.jsonObject
+                    if (obj["draft"]?.jsonPrimitive?.content?.toBooleanStrictOrNull() == true) continue
+                    val isPre = obj["prerelease"]?.jsonPrimitive?.content?.toBooleanStrictOrNull() ?: false
+                    if (!isBeta && isPre) continue
+                    pickHigher(parseReleaseObj(obj, cleanCurrent, "Aaronhrndz/Reddit-for-Wear-OS"))
+                }
+            } catch (_: Exception) {}
+        }
+
+        best
+    }
+
+    private fun fetchText(urlStr: String, accept: String? = null): String? {
+        var conn: HttpURLConnection? = null
+        return try {
+            conn = (URL(urlStr).openConnection() as HttpURLConnection).apply {
                 requestMethod = "GET"
-                setRequestProperty("Accept", "application/vnd.github+json")
+                if (accept != null) setRequestProperty("Accept", accept)
                 setRequestProperty("User-Agent", "RedForReddit-CompanionUpdateChecker")
                 connectTimeout = 6000
                 readTimeout = 6000
+                instanceFollowRedirects = true
             }
-
-            if (conn.responseCode != 200) return@withContext null
-
-            val body = conn.inputStream.bufferedReader().use { it.readText() }
-            val root = if (isBeta) {
-                val arr = json.parseToJsonElement(body).jsonArray
-                if (arr.isNotEmpty()) arr[0].jsonObject else null
-            } else {
-                json.parseToJsonElement(body).jsonObject
-            } ?: return@withContext null
-
-            val tagName = root["tag_name"]?.jsonPrimitive?.content ?: return@withContext null
-            val htmlUrl = root["html_url"]?.jsonPrimitive?.content
-                ?: "https://github.com/Aaronhrndz/Reddit-for-Wear-OS/releases/latest"
-            val cleanLatest = tagName.removePrefix("v").trim()
-            val cleanCurrent = currentVersionName.removePrefix("v").trim()
-
-            var wearUrl: String? = null
-            var mobileUrl: String? = null
-
-            val assets = root["assets"]?.jsonArray
-            assets?.forEach { elem ->
-                val obj = elem.jsonObject
-                val name = obj["name"]?.jsonPrimitive?.content ?: ""
-                val dl = obj["browser_download_url"]?.jsonPrimitive?.content
-                if (name.contains("WearOS", ignoreCase = true) && name.endsWith(".apk")) {
-                    wearUrl = dl
-                } else if (name.contains("Mobile", ignoreCase = true) && name.endsWith(".apk")) {
-                    mobileUrl = dl
-                }
-            }
-
-            CompanionReleaseInfo(
-                latestTag = tagName,
-                latestVersion = cleanLatest,
-                isUpdateAvailable = isNewerVersion(cleanLatest, cleanCurrent),
-                releaseHtmlUrl = htmlUrl,
-                wearApkUrl = wearUrl,
-                mobileApkUrl = mobileUrl
-            )
+            if (conn.responseCode == 200) conn.inputStream.bufferedReader().use { it.readText() } else null
         } catch (_: Exception) {
             null
+        } finally {
+            try { conn?.disconnect() } catch (_: Exception) {}
         }
+    }
+
+    private fun parseReleaseObj(
+        root: kotlinx.serialization.json.JsonObject,
+        cleanCurrent: String,
+        fallbackRepo: String
+    ): CompanionReleaseInfo? {
+        val tagName = root["tag_name"]?.jsonPrimitive?.content ?: return null
+        val htmlUrl = root["html_url"]?.jsonPrimitive?.content
+            ?: "https://github.com/$fallbackRepo/releases/latest"
+        val cleanLatest = tagName.removePrefix("v").trim()
+        var wearUrl: String? = null
+        var mobileUrl: String? = null
+
+        root["assets"]?.jsonArray?.forEach { elem ->
+            val obj = elem.jsonObject
+            val name = obj["name"]?.jsonPrimitive?.content ?: ""
+            val dl = obj["browser_download_url"]?.jsonPrimitive?.content
+            if (name.contains("Wear", ignoreCase = true) && name.endsWith(".apk", ignoreCase = true)) {
+                wearUrl = dl
+            } else if (name.contains("Mobile", ignoreCase = true) && name.endsWith(".apk", ignoreCase = true)) {
+                mobileUrl = dl
+            }
+        }
+
+        return CompanionReleaseInfo(
+            latestTag = tagName,
+            latestVersion = cleanLatest,
+            isUpdateAvailable = isNewerVersion(cleanLatest, cleanCurrent),
+            releaseHtmlUrl = htmlUrl,
+            wearApkUrl = wearUrl,
+            mobileApkUrl = mobileUrl
+        )
     }
 
     fun isNewerVersion(remote: String, local: String): Boolean {

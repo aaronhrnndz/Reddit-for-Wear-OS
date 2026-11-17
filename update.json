@@ -1,0 +1,7 @@
+{
+  "version": "1.6.9",
+  "htmlUrl": "https://codeberg.org/Aaronhrndz/Reddit-for-Wear-OS/releases/tag/v1.6.9",
+  "mobileApkUrl": "https://codeberg.org/Aaronhrndz/Reddit-for-Wear-OS/releases/download/v1.6.9/RedForReddit-Mobile-v1.6.9.apk",
+  "wearApkUrl": "https://codeberg.org/Aaronhrndz/Reddit-for-Wear-OS/releases/download/v1.6.9/RedForReddit-WearOS-v1.6.9.apk",
+  "notes": "Red for Reddit v1.6.9: Multi-source highest-version OTA (Codeberg manifest + Codeberg Releases + dual GitHub)."
+}
