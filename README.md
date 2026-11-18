@@ -149,3 +149,12 @@ If Red for Reddit made your smartwatch experience significantly better, consider
 
 This project is licensed under the **GNU General Public License v3.0 (GPLv3)**. See [LICENSE](LICENSE) for full details. Any derivative work or modification must remain free, open-source, and under this identical license.
 
+---
+
+## ⚠️ Beta Channel & Disclaimer
+
+> [!WARNING]
+> **Beta Channel (7-Tap Unlock):** You can opt into pre-release/beta builds by tapping the **App Version** 7 times in **Settings**. Beta builds are **work-in-progress, unstable snapshots**—features may break, crash, or stop working unexpectedly. If you prefer a smooth, reliable experience, stay on the **stable channel** (beta disabled).
+
+> [!CAUTION]
+> **Disclaimer:** This software is provided **"AS IS"**, without warranty of any kind, under the GPL-3.0 license. The author assumes **no responsibility or liability** for any issues, data loss, account behavior, or damages arising from using either stable or beta builds. Use at your own risk.
